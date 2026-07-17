@@ -18,11 +18,19 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     GEMINI_API_KEY: str = ""
+    
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+    ENVIRONMENT: str = "development"
 
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True
     )
+    
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Convert comma-separated CORS origins to list"""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
 
 settings = Settings()
