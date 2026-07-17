@@ -4,6 +4,7 @@ Google Gemini AI Service
 Handles all interactions with Google's Gemini AI API for chat and text generation.
 """
 
+import asyncio
 from typing import Optional, AsyncGenerator
 import google.generativeai as genai
 
@@ -63,12 +64,14 @@ class GeminiService:
                     'gemini-1.5-flash',
                     system_instruction=system_instruction
                 )
-                response = model.generate_content(
+                response = await asyncio.to_thread(
+                    model.generate_content,
                     prompt,
                     generation_config=generation_config
                 )
             else:
-                response = self.model.generate_content(
+                response = await asyncio.to_thread(
+                    self.model.generate_content,
                     prompt,
                     generation_config=generation_config
                 )

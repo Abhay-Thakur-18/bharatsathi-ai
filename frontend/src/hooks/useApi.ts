@@ -5,10 +5,10 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { chatService, schemeService } from '@/services'
-import type { 
-  ChatRequest, 
-  SchemeSearchParams, 
-  SchemeRecommendRequest 
+import type {
+  ChatRequest,
+  SchemeSearchParams,
+  SchemeRecommendRequest,
 } from '@/types'
 
 // Query Keys
@@ -41,7 +41,7 @@ export function useConversation(id: string) {
 
 export function useSendMessage() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (data: ChatRequest) => chatService.sendMessage(data),
     onSuccess: () => {
@@ -52,7 +52,7 @@ export function useSendMessage() {
 
 export function useDeleteConversation() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (id: string) => chatService.deleteConversation(id),
     onSuccess: () => {
@@ -89,7 +89,7 @@ export function useCategories() {
 
 export function useSchemeRecommendations() {
   return useMutation({
-    mutationFn: (data: SchemeRecommendRequest) => 
+    mutationFn: (data: SchemeRecommendRequest) =>
       schemeService.getRecommendations(data),
   })
 }
