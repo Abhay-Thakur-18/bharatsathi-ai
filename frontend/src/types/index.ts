@@ -52,8 +52,8 @@ export interface ChatRequest {
 
 export interface ChatResponse {
   conversation_id: string
-  message: Message
-  ai_response: Message
+  message: Message      // user_message from backend (mapped by service)
+  ai_response: Message  // assistant_message from backend
 }
 
 // Scheme Types

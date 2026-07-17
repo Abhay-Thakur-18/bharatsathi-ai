@@ -1,14 +1,20 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.schemas.user import (
+    UserCreate, UserLogin, UserResponse, TokenResponse,
+    UserUpdateProfile, UserChangePassword
+)
 from app.models.user import UserModel
 from app.api.auth.service import hash_password, verify_password
 from app.repositories.user_repository import (
     create_user,
-    get_user_by_email
+    get_user_by_email,
+    get_user_by_id,
+    update_user_profile,
+    update_user_password
 )
 from app.utils.jwt import create_access_token
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, get_current_user_id
 from app.core.logger import app_logger
 
 
@@ -20,16 +26,10 @@ router = APIRouter(
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(user: UserCreate):
-    """
-    Register a new user.
-    
-    Creates a new user account with hashed password.
-    Email must be unique.
-    """
+    """Register a new user."""
     app_logger.info(f"Registration attempt for email: {user.email}")
-    
-    existing_user = await get_user_by_email(user.email)
 
+    existing_user = await get_user_by_email(user.email)
     if existing_user:
         app_logger.warning(f"Registration failed - email already exists: {user.email}")
         raise HTTPException(
@@ -38,61 +38,57 @@ async def register(user: UserCreate):
         )
 
     user_data = UserModel.create_document(
-        name=user.name,
+        full_name=user.full_name,
         email=user.email,
         password=hash_password(user.password)
     )
 
     user_id = await create_user(user_data)
-    
     app_logger.info(f"User registered successfully: {user.email}")
 
+    # Return token on registration so frontend can auto-login
+    access_token = create_access_token(data={"sub": user.email})
+
     return {
-        "message": "User registered successfully",
-        "user_id": user_id
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user_id,
+            "full_name": user.full_name,
+            "email": user.email
+        }
     }
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
-    """
-    Authenticate user and return JWT access token.
-    
-    Validates email and password, returns JWT token on success.
-    """
+    """Authenticate user and return JWT access token."""
     app_logger.info(f"Login attempt for email: {credentials.email}")
-    
-    # Fetch user by email
+
     user = await get_user_by_email(credentials.email)
-    
     if not user:
         app_logger.warning(f"Login failed - user not found: {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
-    # Verify password
+
     if not verify_password(credentials.password, user["password"]):
         app_logger.warning(f"Login failed - invalid password: {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": user["email"]}
-    )
-    
+
+    access_token = create_access_token(data={"sub": user["email"]})
     app_logger.info(f"Login successful: {credentials.email}")
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
             "id": str(user["_id"]),
-            "name": user["name"],
+            "full_name": user.get("full_name", user.get("name", "")),
             "email": user["email"]
         }
     }
@@ -102,13 +98,70 @@ async def login(credentials: UserLogin):
 async def get_current_user_info(
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    Get current authenticated user information.
-    
-    Requires valid JWT token in Authorization header.
-    """
+    """Get current authenticated user information."""
     return {
         "id": str(current_user["_id"]),
-        "name": current_user["name"],
+        "full_name": current_user.get("full_name", current_user.get("name", "")),
         "email": current_user["email"]
+    }
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    data: UserUpdateProfile,
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Update the current user's profile information."""
+    success = await update_user_profile(user_id, data.full_name)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update profile"
+        )
+    return {
+        "id": str(current_user["_id"]),
+        "full_name": data.full_name,
+        "email": current_user["email"]
+    }
+
+
+@router.put("/change-password")
+async def change_password(
+    data: UserChangePassword,
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Change the current user's password."""
+    if not verify_password(data.current_password, current_user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    success = await update_user_password(user_id, hash_password(data.new_password))
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update password"
+        )
+
+    return {"message": "Password changed successfully"}
+
+
+@router.get("/dashboard-stats")
+async def get_dashboard_stats(
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get dashboard statistics for the current user."""
+    from app.repositories import chat_repository
+    from app.repositories.scheme_repository import schemes_collection
+
+    conv_count = await chat_repository.count_user_conversations(user_id)
+
+    return {
+        "conversations": conv_count,
+        "schemes_explored": 0,
+        "health_queries": 0,
+        "career_assessments": 0
     }
