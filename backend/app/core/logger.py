@@ -1,6 +1,10 @@
 from loguru import logger
+from pathlib import Path
 import sys
 
+
+# Ensure logs directory exists before adding file handler
+Path("logs").mkdir(exist_ok=True)
 
 logger.remove()
 

@@ -34,6 +34,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loadUser()
   }, [])
 
+  // Listen for global auth:logout event dispatched by Axios 401 interceptor
+  useEffect(() => {
+    const handleLogout = () => {
+      setUser(null)
+      navigate('/login')
+    }
+    window.addEventListener('auth:logout', handleLogout)
+    return () => window.removeEventListener('auth:logout', handleLogout)
+  }, [navigate])
+
   /**
    * Load user from localStorage or fetch from API
    */

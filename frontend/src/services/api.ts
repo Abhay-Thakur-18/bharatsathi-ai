@@ -10,6 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 // Create axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000, // 30 second timeout — covers Gemini AI response latency
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,7 +38,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      window.location.href = '/login'
+      // Use React Router navigation instead of hard redirect to avoid full page reload
+      window.dispatchEvent(new CustomEvent('auth:logout'))
     }
 
     // Handle 403 Forbidden

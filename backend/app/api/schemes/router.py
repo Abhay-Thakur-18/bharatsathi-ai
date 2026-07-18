@@ -15,7 +15,7 @@ from app.schemas.scheme import (
     AISchemeRecommendationResponse
 )
 from app.repositories import scheme_repository
-from app.services.gemini_service import gemini_service
+from app.services.groq_service import groq_service as gemini_service
 from app.dependencies.auth import get_current_user_id
 from app.core.logger import app_logger
 

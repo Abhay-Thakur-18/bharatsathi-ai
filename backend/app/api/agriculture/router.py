@@ -14,7 +14,7 @@ from app.schemas.agriculture import (
     FertilizerRecommendation,
     FertilizerResponse
 )
-from app.services.gemini_service import gemini_service
+from app.services.groq_service import groq_service as gemini_service
 from app.dependencies.auth import get_current_user_id
 from app.repositories.agriculture_repository import log_agriculture_query
 from app.core.logger import app_logger

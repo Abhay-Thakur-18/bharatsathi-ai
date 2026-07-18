@@ -16,7 +16,7 @@ from app.schemas.career import (
     InterviewPrepRequest,
     InterviewPrepResponse
 )
-from app.services.gemini_service import gemini_service
+from app.services.groq_service import groq_service as gemini_service
 from app.dependencies.auth import get_current_user_id
 from app.repositories.career_repository import log_career_query
 from app.core.logger import app_logger

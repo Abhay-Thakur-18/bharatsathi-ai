@@ -22,9 +22,13 @@ export interface SchemeRecommendResponse {
 export const schemeService = {
   /**
    * Search schemes — returns paginated list
+   * NOTE: backend param is `query`, not `search`
    */
   async searchSchemes(params: SchemeSearchParams = {}): Promise<SchemeListResponse> {
-    const response = await api.get<SchemeListResponse>('/schemes/', { params })
+    // Backend uses `query` — remap `search` → `query`
+    const { search, ...rest } = params
+    const backendParams = { ...rest, ...(search ? { query: search } : {}) }
+    const response = await api.get<SchemeListResponse>('/schemes/', { params: backendParams })
     return response.data
   },
 

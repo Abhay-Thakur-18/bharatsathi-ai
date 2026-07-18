@@ -7,7 +7,7 @@ export interface User {
   id: string
   email: string
   full_name: string
-  created_at: string
+  created_at?: string  // Optional — backend UserResponse does not always include this
 }
 
 export interface LoginRequest {

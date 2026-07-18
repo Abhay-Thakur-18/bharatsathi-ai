@@ -21,9 +21,11 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    GEMINI_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""  # Kept for backwards compatibility — no longer used
 
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+    GROQ_API_KEY: str = ""
+
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost:3001"
     ENVIRONMENT: str = "development"
 
     model_config = SettingsConfigDict(

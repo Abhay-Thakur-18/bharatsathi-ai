@@ -27,6 +27,9 @@ from app.api.healthcare.router import router as healthcare_router
 from app.api.agriculture.router import router as agriculture_router
 from app.api.career.router import router as career_router
 
+# Groq startup validation (replaces Gemini)
+from app.services.groq_service import startup_groq_validation
+
 
 app_logger.info("BharatSathi AI Backend — starting up")
 
@@ -62,6 +65,9 @@ async def lifespan(app: FastAPI):
 
     app_logger.info("=== STARTUP: Seeding sample government schemes ===")
     await seed_sample_schemes()
+
+    app_logger.info("=== STARTUP: Validating Groq AI API key ===")
+    await startup_groq_validation()  # Logs errors but does not block startup
 
     app_logger.info("=== Application startup complete — ready to serve ===")
 

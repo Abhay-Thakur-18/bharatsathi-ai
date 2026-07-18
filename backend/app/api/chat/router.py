@@ -18,7 +18,7 @@ from app.schemas.chat import (
 )
 from app.models.chat import ChatModel
 from app.repositories import chat_repository
-from app.services.gemini_service import gemini_service
+from app.services.groq_service import groq_service as gemini_service
 from app.dependencies.auth import get_current_user_id
 from app.core.logger import app_logger
 
@@ -101,7 +101,7 @@ async def send_message(
             app_logger.error(f"AI generation failed: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to generate AI response. Please check if GEMINI_API_KEY is configured."
+                detail="Failed to generate AI response. Please check if GROQ_API_KEY is configured."
             )
         
         # Save assistant message
