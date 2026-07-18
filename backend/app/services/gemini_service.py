@@ -14,16 +14,22 @@ from app.core.logger import app_logger
 
 class GeminiService:
     """Service for interacting with Google Gemini AI"""
-    
+
     def __init__(self):
-        """Initialize Gemini AI with API key"""
+        self.model = None
+        self._initialized = False
+
+    def _ensure_initialized(self):
+        """Lazy-initialize Gemini so the API key is read after .env is loaded."""
+        if self._initialized:
+            return
+        self._initialized = True
         if not settings.GEMINI_API_KEY:
             app_logger.warning("GEMINI_API_KEY not set in environment")
             self.model = None
             return
-        
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
         app_logger.info("Gemini AI service initialized")
     
     async def generate_response(
@@ -33,21 +39,7 @@ class GeminiService:
         temperature: float = 0.7,
         max_tokens: int = 2048
     ) -> str:
-        """
-        Generate a text response from Gemini AI.
-        
-        Args:
-            prompt: User's input prompt
-            system_instruction: Optional system instruction to guide the model
-            temperature: Randomness in response (0.0 to 1.0)
-            max_tokens: Maximum tokens in response
-            
-        Returns:
-            Generated text response
-            
-        Raises:
-            Exception: If API call fails
-        """
+        self._ensure_initialized()
         if not self.model:
             raise Exception("Gemini API key not configured")
         
@@ -61,7 +53,7 @@ class GeminiService:
             
             if system_instruction:
                 model = genai.GenerativeModel(
-                    'gemini-1.5-flash',
+                    'gemini-2.0-flash',
                     system_instruction=system_instruction
                 )
                 response = await asyncio.to_thread(
@@ -89,17 +81,7 @@ class GeminiService:
         chat_history: Optional[list] = None,
         system_instruction: Optional[str] = None
     ) -> str:
-        """
-        Generate a chat response with conversation history.
-        
-        Args:
-            message: Current user message
-            chat_history: List of previous messages (user/assistant pairs)
-            system_instruction: Optional system instruction
-            
-        Returns:
-            Generated response text
-        """
+        self._ensure_initialized()
         if not self.model:
             raise Exception("Gemini API key not configured")
         
@@ -156,7 +138,7 @@ class GeminiService:
             
             if system_instruction:
                 model = genai.GenerativeModel(
-                    'gemini-1.5-flash',
+                    'gemini-2.0-flash',
                     system_instruction=system_instruction
                 )
                 response = model.generate_content(prompt, stream=True)
@@ -174,3 +156,4 @@ class GeminiService:
 
 # Singleton instance
 gemini_service = GeminiService()
+

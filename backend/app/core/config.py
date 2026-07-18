@@ -1,4 +1,8 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolve .env relative to this file, not the working directory
+ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -18,15 +22,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     GEMINI_API_KEY: str = ""
-    
+
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
     ENVIRONMENT: str = "development"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE),
         case_sensitive=True
     )
-    
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Convert comma-separated CORS origins to list"""

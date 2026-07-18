@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Button, Card, Spinner, Textarea, Badge } from '@/components/ui'
+import { Button, Card, Spinner, Textarea } from '@/components/ui'
 import { useConversations, useSendMessage, useDeleteConversation } from '@/hooks/useApi'
 import { chatService } from '@/services'
 import { getErrorMessage } from '@/services'

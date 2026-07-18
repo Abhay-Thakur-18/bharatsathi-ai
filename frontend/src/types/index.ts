@@ -62,15 +62,17 @@ export interface Scheme {
   name: string
   description: string
   category: string
-  ministry: string
+  ministry?: string
   benefits: string[]
   eligibility: string[]
   how_to_apply: string
   official_website?: string
+  documents_required?: string[]
+  target_audience?: string[]
   state?: string
   is_central: boolean
-  view_count: number
-  created_at: string
+  views_count?: number
+  created_at?: string
 }
 
 export interface SchemeSearchParams {
@@ -106,9 +108,9 @@ export interface HealthAskRequest {
 // Agriculture Types
 export interface CropAdviceRequest {
   crop_name: string
-  soil_type: string
-  state: string
-  season: string
+  soil_type?: string
+  state?: string
+  season?: string
 }
 
 export interface PestDiseaseRequest {
@@ -120,7 +122,7 @@ export interface PestDiseaseRequest {
 export interface FertilizerRequest {
   crop_name: string
   soil_type: string
-  growth_stage: string
+  growth_stage?: string
 }
 
 // Career Types
@@ -135,12 +137,14 @@ export interface CareerAdviceRequest {
 export interface ResumeReviewRequest {
   resume_text: string
   target_role: string
+  experience_years?: number
 }
 
 export interface SkillAssessmentRequest {
   current_role: string
   target_role: string
   current_skills: string[]
+  experience_years?: number
 }
 
 export interface InterviewPrepRequest {
