@@ -11,7 +11,8 @@ from app.repositories.user_repository import (
     get_user_by_email,
     get_user_by_id,
     update_user_profile,
-    update_user_password
+    update_user_password,
+    update_last_login,
 )
 from app.utils.jwt import create_access_token
 from app.dependencies.auth import get_current_user, get_current_user_id
@@ -82,6 +83,9 @@ async def login(credentials: UserLogin):
 
     access_token = create_access_token(data={"sub": user["email"]})
     app_logger.info(f"Login successful: {credentials.email}")
+
+    # Stamp last_login timestamp in MongoDB
+    await update_last_login(str(user["_id"]))
 
     return {
         "access_token": access_token,
@@ -155,13 +159,19 @@ async def get_dashboard_stats(
 ):
     """Get dashboard statistics for the current user."""
     from app.repositories import chat_repository
-    from app.repositories.scheme_repository import schemes_collection
+    from app.repositories.healthcare_repository import count_user_healthcare_queries
+    from app.repositories.career_repository import count_user_career_queries
+    from app.repositories.agriculture_repository import count_user_agriculture_queries
 
     conv_count = await chat_repository.count_user_conversations(user_id)
+    health_count = await count_user_healthcare_queries(user_id)
+    career_count = await count_user_career_queries(user_id)
+    agriculture_count = await count_user_agriculture_queries(user_id)
 
     return {
         "conversations": conv_count,
         "schemes_explored": 0,
-        "health_queries": 0,
-        "career_assessments": 0
+        "health_queries": health_count,
+        "career_assessments": career_count,
+        "agriculture_queries": agriculture_count,
     }

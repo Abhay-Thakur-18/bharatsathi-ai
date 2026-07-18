@@ -18,6 +18,7 @@ from app.schemas.career import (
 )
 from app.services.gemini_service import gemini_service
 from app.dependencies.auth import get_current_user_id
+from app.repositories.career_repository import log_career_query
 from app.core.logger import app_logger
 
 
@@ -107,13 +108,23 @@ ACTION PLAN: [comma-separated steps]"""
                         if len(parts4) > 1:
                             action_plan = [a.strip() for a in parts4[1].split(",") if a.strip()]
         
-        return {
+        result = {
             "career_paths": career_paths or [{"title": "Consult Career Counselor", "description": "Get personalized guidance"}],
             "skill_recommendations": skill_recommendations or ["Communication", "Problem-solving", "Technical skills"],
             "courses_certifications": courses or ["Online courses on Coursera/Udemy", "Industry certifications"],
             "job_market_insights": insights or "Diverse opportunities available across sectors.",
             "action_plan": action_plan or ["Identify target role", "Develop required skills", "Build portfolio", "Network"]
         }
+
+        # Persist query to MongoDB
+        await log_career_query(
+            user_id=user_id,
+            query_type="career_advice",
+            query_data=request.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Career advice error: {str(e)}")
@@ -198,13 +209,23 @@ KEYWORDS: [comma-separated]"""
                         if len(parts4) > 1:
                             keywords = [k.strip() for k in parts4[1].split(",") if k.strip()]
         
-        return {
+        result = {
             "overall_score": min(max(score, 0), 100),
             "strengths": strengths or ["Good educational background"],
             "weaknesses": weaknesses or ["Improve formatting", "Add quantifiable achievements"],
             "suggestions": suggestions or ["Use action verbs", "Quantify achievements", "Tailor to job description"],
             "keyword_recommendations": keywords or ["Leadership", "Problem-solving", "Team collaboration"]
         }
+
+        # Persist query to MongoDB
+        await log_career_query(
+            user_id=user_id,
+            query_type="resume_review",
+            query_data={"target_role": request.target_role, "experience_years": request.experience_years},
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Resume review error: {str(e)}")
@@ -278,13 +299,23 @@ ESTIMATED TIME: [time description]"""
                     if len(parts3) > 1:
                         estimated_time = parts3[1].strip()
         
-        return {
+        result = {
             "target_role": request.target_role,
             "required_skills": required_skills or ["Technical skills", "Soft skills"],
             "skill_gaps": skill_gaps or ["Need to assess based on target role"],
             "learning_path": learning_path or [{"step": "Start with basics", "resource": "Online courses"}],
             "estimated_time": estimated_time
         }
+
+        # Persist query to MongoDB
+        await log_career_query(
+            user_id=user_id,
+            query_type="skill_assessment",
+            query_data=request.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Skill assessment error: {str(e)}")
@@ -341,11 +372,21 @@ RESOURCES: [comma-separated]"""
                 if len(parts2) > 1:
                     resources = [r.strip() for r in parts2[1].split(",") if r.strip()]
         
-        return {
+        result = {
             "common_questions": questions or ["Tell me about yourself", "Why this role?", "Your strengths?"],
             "preparation_tips": tips or ["Research company", "Practice answers", "Prepare questions"],
             "resources": resources or ["Glassdoor", "LinkedIn", "Company website"]
         }
+
+        # Persist query to MongoDB
+        await log_career_query(
+            user_id=user_id,
+            query_type="interview_prep",
+            query_data=request.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Interview prep error: {str(e)}")

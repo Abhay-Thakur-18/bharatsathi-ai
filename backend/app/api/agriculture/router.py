@@ -16,6 +16,7 @@ from app.schemas.agriculture import (
 )
 from app.services.gemini_service import gemini_service
 from app.dependencies.auth import get_current_user_id
+from app.repositories.agriculture_repository import log_agriculture_query
 from app.core.logger import app_logger
 
 
@@ -98,13 +99,23 @@ RESOURCES: [List resources, comma-separated]"""
         else:
             advice = response
         
-        return {
+        result = {
             "crop_name": request.crop_name,
             "advice": advice or "Consult local agricultural extension officer for specific guidance.",
             "best_practices": best_practices or ["Follow recommended sowing practices", "Regular monitoring"],
             "common_issues": common_issues or ["Pest attacks", "Weather dependency"],
             "resources": resources or ["Kisan Call Centre: 1800-180-1551", "PM-KISAN Portal"]
         }
+
+        # Persist query to MongoDB
+        await log_agriculture_query(
+            user_id=user_id,
+            query_type="crop_advice",
+            query_data=request.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Crop advice error: {str(e)}")
@@ -168,11 +179,21 @@ PREVENTIVE MEASURES: [List measures, comma-separated]"""
                 if len(parts2) > 1:
                     preventive_measures = [m.strip() for m in parts2[1].split(",") if m.strip()]
         
-        return {
+        result = {
             "possible_issues": possible_issues or ["Consult agricultural extension officer"],
             "solutions": solutions or ["Use recommended pesticides", "Follow integrated pest management"],
             "preventive_measures": preventive_measures or ["Regular monitoring", "Crop rotation", "Proper sanitation"]
         }
+
+        # Persist query to MongoDB
+        await log_agriculture_query(
+            user_id=user_id,
+            query_type="pest_disease",
+            query_data=query.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Pest/disease identification error: {str(e)}")
@@ -234,12 +255,22 @@ ORGANIC ALTERNATIVES: [List organic options, comma-separated]"""
                 if len(parts2) > 1:
                     organic_alternatives = [o.strip() for o in parts2[1].split(",") if o.strip()]
         
-        return {
+        result = {
             "crop": request.crop,
             "recommendations": recommendations or [{"recommendation": "Consult soil testing laboratory"}],
             "application_tips": application_tips or ["Follow recommended dosage", "Apply at right time"],
             "organic_alternatives": organic_alternatives or ["Compost", "Vermicompost", "Green manure"]
         }
+
+        # Persist query to MongoDB
+        await log_agriculture_query(
+            user_id=user_id,
+            query_type="fertilizer",
+            query_data=request.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Fertilizer recommendation error: {str(e)}")
