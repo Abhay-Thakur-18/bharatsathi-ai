@@ -14,6 +14,7 @@ from app.schemas.healthcare import (
 )
 from app.services.gemini_service import gemini_service
 from app.dependencies.auth import get_current_user_id
+from app.repositories.healthcare_repository import log_healthcare_query
 from app.core.logger import app_logger
 
 
@@ -95,13 +96,23 @@ WHEN TO SEE DOCTOR: [When to seek medical help]"""
         else:
             analysis = response
         
-        return {
+        result = {
             "analysis": analysis or "Unable to analyze symptoms. Please consult a healthcare professional.",
             "possible_conditions": possible_conditions or ["Consult a doctor for proper diagnosis"],
             "recommendations": recommendations or ["Seek professional medical advice"],
             "when_to_see_doctor": when_to_see_doctor,
             "disclaimer": HEALTH_DISCLAIMER
         }
+
+        # Persist query to MongoDB
+        await log_healthcare_query(
+            user_id=user_id,
+            query_type="symptom_check",
+            query_data=data.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Symptom check error: {str(e)}")
@@ -159,12 +170,22 @@ IMPORTANT: Always include a disclaimer that this is informational and not medica
             if source.lower() in answer.lower():
                 sources.append(source)
         
-        return {
+        result = {
             "query": query.query,
             "answer": answer,
             "sources": sources,
             "disclaimer": HEALTH_DISCLAIMER
         }
+
+        # Persist query to MongoDB
+        await log_healthcare_query(
+            user_id=user_id,
+            query_type="health_question",
+            query_data=query.model_dump(),
+            response_data=result,
+        )
+
+        return result
     
     except Exception as e:
         app_logger.error(f"Health query error: {str(e)}")
