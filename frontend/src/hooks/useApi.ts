@@ -4,11 +4,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { chatService, schemeService } from '@/services'
+import { chatService, schemeService, profileService } from '@/services'
 import type {
   ChatRequest,
   SchemeSearchParams,
   SchemeRecommendRequest,
+  ProfileUpdateRequest,
+  PreferencesUpdateRequest,
 } from '@/types'
 
 // Query Keys
@@ -18,6 +20,9 @@ export const queryKeys = {
   schemes: (params: SchemeSearchParams) => ['schemes', params] as const,
   scheme: (id: string) => ['scheme', id] as const,
   categories: ['categories'] as const,
+  profile: ['profile'] as const,
+  profileStats: ['profile', 'statistics'] as const,
+  profileActivity: ['profile', 'activity'] as const,
 }
 
 /**
@@ -99,3 +104,82 @@ export function useSchemeExplanation() {
     mutationFn: (id: string) => schemeService.getExplanation(id),
   })
 }
+
+/**
+ * Profile Hooks
+ */
+
+export function useProfile() {
+  return useQuery({
+    queryKey: queryKeys.profile,
+    queryFn: () => profileService.getProfile(),
+    staleTime: 2 * 60 * 1000, // 2 min
+  })
+}
+
+export function useProfileStats() {
+  return useQuery({
+    queryKey: queryKeys.profileStats,
+    queryFn: () => profileService.getStatistics(),
+    staleTime: 60 * 1000, // 1 min
+  })
+}
+
+export function useProfileActivity() {
+  return useQuery({
+    queryKey: queryKeys.profileActivity,
+    queryFn: () => profileService.getActivity(),
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: ProfileUpdateRequest) => profileService.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useUpdatePreferences() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: PreferencesUpdateRequest) => profileService.updatePreferences(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useUploadAvatar() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => profileService.uploadAvatar(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: ({ current_password, new_password }: { current_password: string; new_password: string }) =>
+      profileService.changePassword(current_password, new_password),
+  })
+}
+
+export function useLogoutAll() {
+  return useMutation({
+    mutationFn: () => profileService.logoutAll(),
+  })
+}
+
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: () => profileService.deleteAccount(),
+  })
+}
+
+

@@ -336,3 +336,8 @@ async def log_scheme_search(user_id: str, query_text: str, filters: dict):
         await scheme_searches_collection.insert_one(search_log)
     except Exception as e:
         app_logger.error(f"Error logging search: {str(e)}")
+
+
+async def count_user_scheme_searches(user_id: str) -> int:
+    """Count total scheme searches performed by a user."""
+    return await scheme_searches_collection.count_documents({"user_id": user_id})
