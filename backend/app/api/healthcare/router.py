@@ -13,6 +13,8 @@ from app.schemas.healthcare import (
     HealthQueryResponse
 )
 from app.services.gemini_service import gemini_service
+from app.core.exceptions import GeminiError
+from app.utils.gemini_error_handler import raise_gemini_http_error
 from app.dependencies.auth import get_current_user_id
 from app.repositories.healthcare_repository import log_healthcare_query
 from app.core.logger import app_logger
@@ -71,7 +73,12 @@ POSSIBLE CONDITIONS: [List conditions, comma-separated]
 RECOMMENDATIONS: [List recommendations, comma-separated]
 WHEN TO SEE DOCTOR: [When to seek medical help]"""
 
-        response = await gemini_service.generate_response(prompt, temperature=0.3)
+        try:
+            response = await gemini_service.generate_response(
+                prompt, feature="healthcare", user_id=user_id, temperature=0.3
+            )
+        except GeminiError as exc:
+            raise_gemini_http_error(exc, context="healthcare/symptom-check")
         
         # Parse response
         analysis = ""
@@ -114,11 +121,13 @@ WHEN TO SEE DOCTOR: [When to seek medical help]"""
 
         return result
     
-    except Exception as e:
-        app_logger.error(f"Symptom check error: {str(e)}")
+    except GeminiError as exc:
+        raise_gemini_http_error(exc, context="healthcare/symptom-check")
+    except Exception as exc:
+        app_logger.error(f"Symptom check error: {exc}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process symptom check"
+            detail="Failed to process symptom check.",
         )
 
 
@@ -155,7 +164,12 @@ Keep the answer:
 
 IMPORTANT: Always include a disclaimer that this is informational and not medical advice."""
 
-        answer = await gemini_service.generate_response(prompt, temperature=0.5)
+        try:
+            answer = await gemini_service.generate_response(
+                prompt, feature="healthcare", user_id=user_id, temperature=0.5
+            )
+        except GeminiError as exc:
+            raise_gemini_http_error(exc, context="healthcare/ask")
         
         # Extract potential sources mentioned
         sources = []

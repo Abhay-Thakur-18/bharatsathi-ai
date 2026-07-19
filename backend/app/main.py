@@ -17,6 +17,7 @@ from app.repositories.healthcare_repository import initialize_healthcare_indexes
 from app.repositories.agriculture_repository import initialize_agriculture_indexes
 from app.repositories.career_repository import initialize_career_indexes
 from app.repositories.analytics_repository import initialize_analytics_indexes
+from app.repositories.ai_repository import initialize_ai_interactions_indexes
 
 # API routers
 from app.api.health.router import router as health_router
@@ -26,6 +27,7 @@ from app.api.schemes.router import router as schemes_router
 from app.api.healthcare.router import router as healthcare_router
 from app.api.agriculture.router import router as agriculture_router
 from app.api.career.router import router as career_router
+from app.api.profile.router import router as profile_router
 
 
 app_logger.info("BharatSathi AI Backend — starting up")
@@ -58,6 +60,7 @@ async def lifespan(app: FastAPI):
     await initialize_agriculture_indexes() # agriculture_queries
     await initialize_career_indexes()    # career_queries
     await initialize_analytics_indexes() # analytics, feedback, logs, user_profiles
+    await initialize_ai_interactions_indexes()  # ai_interactions
     app_logger.info("All collection indexes created/verified")
 
     app_logger.info("=== STARTUP: Seeding sample government schemes ===")
@@ -105,6 +108,7 @@ app.include_router(schemes_router)
 app.include_router(healthcare_router)
 app.include_router(agriculture_router)
 app.include_router(career_router)
+app.include_router(profile_router)
 
 
 # ------------------------------------------------------------------ #

@@ -19,6 +19,8 @@ from app.schemas.chat import (
 from app.models.chat import ChatModel
 from app.repositories import chat_repository
 from app.services.gemini_service import gemini_service
+from app.core.exceptions import GeminiError
+from app.utils.gemini_error_handler import raise_gemini_http_error
 from app.dependencies.auth import get_current_user_id
 from app.core.logger import app_logger
 
@@ -94,15 +96,13 @@ async def send_message(
         try:
             ai_response = await gemini_service.generate_chat_response(
                 message=chat_data.message,
+                feature="chat",
+                user_id=user_id,
                 chat_history=chat_history,
                 system_instruction=SYSTEM_INSTRUCTION
             )
-        except Exception as e:
-            app_logger.error(f"AI generation failed: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to generate AI response. Please check if GEMINI_API_KEY is configured."
-            )
+        except GeminiError as exc:
+            raise_gemini_http_error(exc, context="chat/send_message")
         
         # Save assistant message
         assistant_message_data = ChatModel.create_message(
@@ -135,11 +135,13 @@ async def send_message(
     
     except HTTPException:
         raise
-    except Exception as e:
-        app_logger.error(f"Chat error: {str(e)}")
+    except GeminiError as exc:
+        raise_gemini_http_error(exc, context="chat/send_message")
+    except Exception as exc:
+        app_logger.error(f"Chat error: {exc}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process chat message: {str(e)}"
+            detail="Failed to process chat message.",
         )
 
 

@@ -17,6 +17,8 @@ from app.schemas.career import (
     InterviewPrepResponse
 )
 from app.services.gemini_service import gemini_service
+from app.core.exceptions import GeminiError
+from app.utils.gemini_error_handler import raise_gemini_http_error
 from app.dependencies.auth import get_current_user_id
 from app.repositories.career_repository import log_career_query
 from app.core.logger import app_logger
@@ -76,7 +78,12 @@ COURSES CERTIFICATIONS: [comma-separated courses]
 JOB MARKET INSIGHTS: [detailed market analysis]
 ACTION PLAN: [comma-separated steps]"""
 
-        response = await gemini_service.generate_response(prompt, temperature=0.6)
+        try:
+            response = await gemini_service.generate_response(
+                prompt, feature="career", user_id=user_id, temperature=0.6
+            )
+        except GeminiError as exc:
+            raise_gemini_http_error(exc, context="career/advice")
         
         # Parse response
         career_paths = []

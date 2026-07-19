@@ -15,6 +15,8 @@ from app.schemas.agriculture import (
     FertilizerResponse
 )
 from app.services.gemini_service import gemini_service
+from app.core.exceptions import GeminiError
+from app.utils.gemini_error_handler import raise_gemini_http_error
 from app.dependencies.auth import get_current_user_id
 from app.repositories.agriculture_repository import log_agriculture_query
 from app.core.logger import app_logger
@@ -74,7 +76,12 @@ BEST PRACTICES: [List practices, comma-separated]
 COMMON ISSUES: [List issues, comma-separated]
 RESOURCES: [List resources, comma-separated]"""
 
-        response = await gemini_service.generate_response(prompt, temperature=0.5)
+        try:
+            response = await gemini_service.generate_response(
+                prompt, feature="agriculture", user_id=user_id, temperature=0.5
+            )
+        except GeminiError as exc:
+            raise_gemini_http_error(exc, context="agriculture/crop-advice")
         
         # Parse response
         advice = ""

@@ -109,6 +109,20 @@ async def update_user_profile(user_id: str, full_name: str) -> bool:
         return False
 
 
+async def update_full_profile(user_id: str, fields: dict) -> bool:
+    """Update multiple profile fields on the user document at once."""
+    try:
+        fields["updated_at"] = datetime.utcnow()
+        result = await users_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": fields},
+        )
+        return result.acknowledged
+    except Exception as exc:
+        app_logger.error(f"Error updating full profile for user '{user_id}': {exc}")
+        return False
+
+
 async def update_user_password(user_id: str, hashed_password: str) -> bool:
     """Replace the stored bcrypt password hash."""
     try:
